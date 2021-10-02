@@ -1,14 +1,7 @@
-import os,sys,subprocess
+import glob
 from itertools import islice
 
-def get_all_terraform_files():
-    """Returns a list with path/name of the chosen files. 
-
-    Uses the Unix 'find' package to recursivly search the
-    specified files in the defined scope. 
-    """
-    files_cmd = subprocess.Popen("find . -type f -name '*.tf'", shell=True, stdout=subprocess.PIPE)
-    return list(filter(None, files_cmd.stdout.read().decode('ascii').split('\n')))
+DEBUG = False
 
 def remove_whitespaces(string):
     """Returns a string completly stripped.
@@ -51,14 +44,14 @@ def ignore_block(i, lines):
     return lines_to_ignore
 
 if __name__ == "__main__":
-    files = get_all_terraform_files()
+    files = glob.glob('.' + '/**/*.tf', recursive=True)
     for file in files:
-        print('Working on [%s] file' % (file))
+        if DEBUG: print('Working on [%s] file' % (file))
         
-        print(' 1. Reading file and removing all spaces and indentation')
+        if DEBUG: print(' 1. Reading file and removing all spaces and indentation')
         raw_lines = get_raw_lines(open(file, 'r').readlines())
         
-        print(' 2. Breaking lines')
+        if DEBUG: print(' 2. Breaking lines')
         spaced_lines = []
         for i, line in enumerate(raw_lines):
             jump_line = 0
@@ -67,16 +60,14 @@ if __name__ == "__main__":
             if i < (len(raw_lines) - 1):
                 next_line = raw_lines[i+1]
                 
+                # Generic (not to break)
+                if line.endswith('{') or line.endswith('{'):
+                    if next_line.endswith('{') or next_line.endswith('['):
+                        spaced_lines.append(line)
+                        continue
+                
                 # Custom (not to break)
-                if not line == 'locals {' and \
-                not line == 'terraform {' and \
-                not line == 'required_providers {' and \
-                not line.startswith('#') and \
-                not next_line == 'rules = var.rule_self ? concat(var.rules, [{' and \
-                not next_line == 'backend "s3" {' and \
-                not next_line == 'required_providers {' and \
-                not next_line == 'awsutils = {' and \
-                not next_line == 'listener_tags = merge(var.tags, {' and \
+                if not line.startswith('#') and \
                 len(next_line) > 1:
 
                     # Custom (to break)
@@ -92,7 +83,7 @@ if __name__ == "__main__":
                 else: spaced_lines.append(line)
             else: spaced_lines.append(line)
 
-        print(' 3. Re-indenting lines')
+        if DEBUG: print(' 3. Re-indenting lines')
         indented_lines = []
         indentation = 0
         for i, line in enumerate(spaced_lines):
@@ -121,7 +112,7 @@ if __name__ == "__main__":
                  ('[' in line and not ']' in line):
                 indentation += 1
 
-        print(' 4. Tagging lines not to format with HCL right padding')
+        if DEBUG: print(' 4. Tagging lines not to format with HCL right padding')
         lines_to_ignore = []
         for i, line in enumerate(indented_lines):
             # Break lines
@@ -147,7 +138,7 @@ if __name__ == "__main__":
         
         lines_to_ignore.sort()
 
-        print(' 5. Grouping blocks of lines')
+        if DEBUG: print(' 5. Grouping blocks of lines')
         lines_group = []
         group = 0
         for i, line in enumerate(indented_lines):
@@ -174,7 +165,7 @@ if __name__ == "__main__":
                         blocks_group[lines_group[i]] = line_len
                         helper = line_len
 
-        print(' 6. Trucating and rewriting file HCL-style')
+        if DEBUG: print(' 6. Trucating and rewriting file HCL-style')
         with open(file, 'w') as formated_file:
             formated_file.truncate()
             for i, line in enumerate(indented_lines):
@@ -193,4 +184,4 @@ if __name__ == "__main__":
                 else:
                     formated_file.write(line + '\n')
         
-        print('Completed!\n')
+        if DEBUG: print('Completed!\n')
