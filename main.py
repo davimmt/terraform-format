@@ -2,6 +2,7 @@ import glob
 from itertools import islice
 
 DEBUG = False
+MAX_PADDING = 23
 
 def remove_whitespaces(string):
     """Returns a string completly stripped.
@@ -148,6 +149,7 @@ if __name__ == "__main__":
             else:
                 lines_group.append(group)
 
+        # Discover correct padding
         blocks_group = {}
         helper = 0 
         for i, line in enumerate(indented_lines): 
@@ -161,7 +163,7 @@ if __name__ == "__main__":
                     if blocks_group[lines_group[i]] != helper: 
                         blocks_group[lines_group[i]] = line_len
                         helper = line_len
-                    elif line_len > blocks_group[lines_group[i]]:
+                    elif line_len > blocks_group[lines_group[i]] and line_len < MAX_PADDING:
                         blocks_group[lines_group[i]] = line_len
                         helper = line_len
 
