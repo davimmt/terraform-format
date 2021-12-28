@@ -69,6 +69,7 @@ if __name__ == "__main__":
                 
                 # Custom (not to break)
                 if not line.startswith('#') and \
+                not line.strip() == 'locals {' and \
                 len(next_line) > 1:
 
                     # Custom (to break)
