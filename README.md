@@ -15,7 +15,7 @@ locals{ok = "lol" }
 
 resource "aws_instance" "ec2" {
   for_each = {for i, instance in var.instances: i => instance if i in ["match"]}
-   subnet_id = local.output[each.value.subnet]
+   subnet_id = local.output[each.value.subnet ]
  ami                    = var.ami
 instance_type    = var.type
   key_name               = var.key_name
@@ -50,8 +50,8 @@ root_block_device {
 `main.tf (after)`
 ```
 resource "aws_instance" "ec2" {
-  count         = var.instance_number
-  subnet_id     = local.output[count.index]
+  for_each      = { for i, instance in var.instances: i => instance if i in ["match"] }
+  subnet_id     = local.output[each.value.subnet]
   ami           = var.ami
   instance_type = var.type
   key_name      = var.key_name
