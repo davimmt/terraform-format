@@ -6,9 +6,16 @@ Example of file and it's formatted rewrite:
 
 `main.tf (before)`
 ```
+
+
+
+provider "aws" {region = "us-east-1"}
+data "aws_something" "something"{ region = "us-east-1"}
+locals{ok = "lol" }
+
 resource "aws_instance" "ec2" {
-  count = var.instance_number
-   subnet_id = local.output[count.index]
+  for_each = {for i, instance in var.instances: i => instance if i in ["match"]}
+   subnet_id = local.output[each.value.subnet]
  ami                    = var.ami
 instance_type    = var.type
   key_name               = var.key_name
@@ -19,6 +26,9 @@ root_block_device {
 	volume_size = var.root_block_device.volume_size
 	volume_type = var.root_block_device.volume_type
 }
+
+
+
 
   dynamic "ebs_block_device" {
   for_each        = var.block_devices
@@ -31,6 +41,10 @@ root_block_device {
 }
   instance_initiated_shutdown_behavior = var.shutdown_behavior
 }
+
+
+
+
 ```
 
 `main.tf (after)`
